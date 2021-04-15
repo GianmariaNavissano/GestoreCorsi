@@ -5,8 +5,13 @@
 package it.polito.tdp.corsi;
 
 import java.net.URL;
+import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
+
+import it.polito.tdp.corsi.model.Corso;
 import it.polito.tdp.corsi.model.Model;
+import it.polito.tdp.corsi.model.Studente;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -47,21 +52,105 @@ public class FXMLController {
     @FXML
     void corsiPerPeriodo(ActionEvent event) {
     	
+    	//Eseguo controlli sull'input
+    	String periodoStringsa = txtPeriodo.getText();
+    	Integer periodo;
+    	try {
+    		periodo = Integer.parseInt(periodoStringsa);
+    	} catch (NumberFormatException nfe) {
+    		txtRisultato.setText("Devi inserire un numero (1 o 2) per il periodo didattico");
+    		return;
+    	} catch(NullPointerException npe) { //in caso sia vuota
+    		txtRisultato.setText("Devi inserire un numero (1 o 2) per il periodo didattico");
+    		return;
+    	}
+    	if(periodo<1 || periodo>2) {
+    		txtRisultato.setText("Devi inserire un numero (1 o 2) per il periodo didattico");
+    		return;
+    	}
+    	
+    	//Dopo aver letto e controllato l'input faccio operazioni sui dati (lo fa il model)
+    	List<Corso> corsi = this.model.getCorsiByPeriodo(periodo);
+    	/*for(Corso c : corsi) {
+    		txtRisultato.appendText(c.toString() + "\n");
+    	}*/
+    	
+    	//Creiamo una stringa più "bella" con StringBuilder
+    	//e formattiamo la stringa in colonne con String .format che 
+    	//usa un linguaggio particolare per descrivere la stringa
+    	//in particolare il - indica allineata a sx il numero indica 
+    	//lo spazio dedicato e la lettera il tipo (s= string d= digit)
+    	StringBuilder sb = new StringBuilder();
+    	for(Corso c : corsi) {
+    		sb.append(String.format("%-8s", c.getCodins()));
+    		sb.append(String.format("%-4d", c.getCrediti()));
+    		sb.append(String.format("%-50s", c.getNome()));
+    		sb.append(String.format("%-2d\n", c.getPd()));
+    	}
+    	
+    	this.txtRisultato.appendText(sb.toString());
     }
 
     @FXML
     void numeroStudenti(ActionEvent event) {
+    	//Eseguo controlli sull'input
+    	String periodoStringsa = txtPeriodo.getText();
+    	Integer periodo;
+    	try {
+    		periodo = Integer.parseInt(periodoStringsa);
+    	} catch (NumberFormatException nfe) {
+    		txtRisultato.setText("Devi inserire un numero (1 o 2) per il periodo didattico");
+    		return;
+    	} catch(NullPointerException npe) { //in caso sia vuota
+    		txtRisultato.setText("Devi inserire un numero (1 o 2) per il periodo didattico");
+    		return;
+    	}
+    	if(periodo<1 || periodo>2) {
+    		txtRisultato.setText("Devi inserire un numero (1 o 2) per il periodo didattico");
+    		return;
+    	}
     	
+    	//Dopo aver letto e controllato l'input faccio operazioni sui dati (lo fa il model)
+    	Map<Corso, Integer> corsiIscrizioni = this.model.getIscrittiByPeriodo(periodo);
+    	for(Corso c : corsiIscrizioni.keySet()) {
+    		txtRisultato.appendText(c.toString());
+    		Integer n = corsiIscrizioni.get(c);
+    		txtRisultato.appendText("\t"+ n+ "\n");
+    	}
     }
 
     @FXML
     void stampaDivisione(ActionEvent event) {
-
+    	this.txtRisultato.clear();
+    	
+    	String codice = this.txtCorso.getText();
+    	if(!model.esisteCorso(codice)) {
+    		this.txtRisultato.setText("Il corso non esiste");
+    	} else {
+    		Map<String, Integer> divisione = model.getDivisioneCDS(codice);
+    		
+    		for(String cds : divisione.keySet()) {
+    			this.txtRisultato.appendText(cds+ " "+ divisione.get(cds) + "\n");
+    		}
+    	}
+    	
     }
 
     @FXML
     void stampaStudenti(ActionEvent event) {
-
+    	String codice = this.txtCorso.getText();
+    	if(!model.esisteCorso(codice)) {
+    		this.txtRisultato.setText("Il corso non esiste");
+    	}
+    	else {
+    		List<Studente> studenti = model.getStudentiByCorso(codice);
+        	if(studenti.size()==0) {
+        		this.txtRisultato.appendText("Il corso non ha iscritti");
+        	}
+        	for(Studente s : studenti) {
+        		this.txtRisultato.appendText(s + "\n");
+        	}
+    	}
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -73,7 +162,7 @@ public class FXMLController {
         assert btnStudenti != null : "fx:id=\"btnStudenti\" was not injected: check your FXML file 'Scene.fxml'.";
         assert btnDivisioneStudenti != null : "fx:id=\"btnDivisioneStudenti\" was not injected: check your FXML file 'Scene.fxml'.";
         assert txtRisultato != null : "fx:id=\"txtRisultato\" was not injected: check your FXML file 'Scene.fxml'.";
-
+        this.txtRisultato.setStyle("-fx-font-family: monospace");
     }
     
     public void setModel(Model model) {
